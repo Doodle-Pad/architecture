@@ -2,7 +2,6 @@ package com.example.hexagonal.domain;
 
 import lombok.Getter;
 import lombok.ToString;
-import org.springframework.util.Assert;
 
 import java.util.Objects;
 
