@@ -1,5 +1,6 @@
 package com.example.hexagonal.domain;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,22 +18,32 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * 26. 9. 6.        Yeong-Huns       최초 생성
  */
 class MemberTest {
+    Member member;
+    PasswordEncoder passwordEncoder;
+
+    @BeforeEach
+    void setUp() {
+        this.passwordEncoder = new PasswordEncoder() {
+            @Override
+            public String encode(String password) {
+                return password.toUpperCase();
+            }
+            @Override
+            public boolean matches(String password, String passwordHash) {
+                return encode(password).equals(passwordHash);
+            }
+        };
+
+        this.member = Member.create("vosxja1@naver.com", "YeongHuns", "secret", passwordEncoder);
+    }
+
     @Test
     void createMember() {
-        var member = new Member("vosxja1@naver.com", "YeongHuns", "secret");
-
         assertThat(member.getStatus()).isEqualTo(MemberStatus.PENDING);
     }
 
     @Test
-    void constructorNullCheck() {
-        assertThatThrownBy(() -> new Member(null, "YeongHuns", "secret")).isInstanceOf(NullPointerException.class);
-    }
-
-    @Test
     void activate() {
-        var member = new Member("vosxja1@naver.com", "YeongHuns", "secret");
-
         member.activate();
 
         assertThat(member.getStatus()).isEqualTo(MemberStatus.ACTIVE);
@@ -40,8 +51,6 @@ class MemberTest {
 
     @Test
     void activateFail() {
-        var member = new Member("vosxja1@naver.com", "YeongHuns", "secret");
-
         member.activate();
 
         assertThatThrownBy(member::activate).isInstanceOf(IllegalStateException.class);
@@ -49,8 +58,6 @@ class MemberTest {
 
     @Test
     void deactivate() {
-        var member = new Member("vosxja1@naver.com", "YeongHuns", "secret");
-
         member.activate();
         member.deactivate();
 
@@ -60,19 +67,39 @@ class MemberTest {
     @Test
     @DisplayName("Activate 상태가 아닌 유저의 경우 Deactivate로 전환할 수 없다.")
     void deactivateFailWhenStatusNotActivate() {
-        var member = new Member("vosxja1@naver.com", "YeongHuns", "secret");
-
         assertThatThrownBy(member::deactivate).isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     @DisplayName("이미 Deactivate인 유저의 경우 Deactivate로 전환할 수 없다.")
     void deactivateFailWhenStatusIsAlreadyDeactivate() {
-        var member = new Member("vosxja1@naver.com", "YeongHuns", "secret");
-
         member.activate();
         member.deactivate();
 
         assertThatThrownBy(member::deactivate).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void verifyPassword() {
+        assertThat(member.verifyPassword("secret", passwordEncoder)).isTrue();
+        assertThat(member.verifyPassword("hello", passwordEncoder)).isFalse();
+    }
+
+    @Test
+    void updateNickname() {
+        assertThat(member.getNickname()).isEqualTo("YeongHuns");
+
+        member.updateNickname("dino");
+
+        assertThat(member.getNickname()).isEqualTo("dino");
+    }
+
+    @Test
+    void updatePassword() {
+        assertThat(member.verifyPassword("secret", passwordEncoder)).isTrue();
+
+        member.updatePassword("newSecret", passwordEncoder);
+
+        assertThat(member.verifyPassword("newSecret", passwordEncoder)).isTrue();
     }
 }
