@@ -113,4 +113,17 @@ class MemberTest {
 
         assertThat(member.isActive()).isFalse();
     }
+
+    @Test
+    void isValidEmail() {
+        assertThatThrownBy(() -> Member.create(new MemberCreateRequest("vosxja1@naver.com", "YeongHuns", "secret"), passwordEncoder)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void equality() {
+        var email1 = new Email("dino@gmail.com");
+        var email2 = new Email("dino@gmail.com");
+
+        assertThat(email1).isEqualTo(email2);
+    }
 }
